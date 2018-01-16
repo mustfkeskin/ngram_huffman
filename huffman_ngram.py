@@ -8,6 +8,7 @@ Created on Sat Jan 13 08:51:28 2018
 
 import heapq
 import os
+import csv
 
 class HeapNode:
     def __init__(self, char, freq):
@@ -43,25 +44,68 @@ class HuffmanCoding:
                 frequency[character] = 1
             frequency[character] += 1
             
+            
             character = text[i : i + 2]
             if not character in frequency:
                 frequency[character] = 1
             frequency[character] += 1
             
+            
             character = text[i : i + 3]
             if not character in frequency:
                 frequency[character] = 1
             frequency[character] += 1
+            
+        
+        
+        i += 1    
+        character = text[i]
+        if not character in frequency:
+            frequency[character] = 1
+        frequency[character] += 1
+        
+        character = text[i + 1]
+        if not character in frequency:
+            frequency[character] = 1
+        frequency[character] += 1
+        
+        character = text[i + 2]
+        if not character in frequency:
+            frequency[character] = 1
+        frequency[character] += 1
+        
+            
+        character = text[i : i + 2]
+        if not character in frequency:
+            frequency[character] = 1
+        frequency[character] += 1
+        
+        character = text[i + 1 : i + 3]
+        if not character in frequency:
+            frequency[character] = 1
+        frequency[character] += 1
+        
+        
+        character = text[i : i + 3]
+        if not character in frequency:
+            frequency[character] = 1
+        frequency[character] += 1
+        
         
         total = sum(frequency.values())
         length = len(frequency)
         mean = float(total) / length
-        
         frequency  = dict((k, v) for k, v in frequency.items() if v >= mean or len(k) == 1)
+        
+        
+        
+        
         print "ilk ortalama: " + str(mean)
         print "ilk uzunluk: " + str(length)
         print "Son ortalama: " + str(float(sum(frequency.values())) / len(frequency))
         print "Son uzunluk: " + str(len(frequency))
+               
+        #print frequency
         return frequency
     
 
@@ -106,20 +150,52 @@ class HuffmanCoding:
         i = 0
         while i < len(text) - 3:
             
+             
             if(text[i : i + 3] in dictionary):
                 character = text[i : i + 3]
                 encoded_text += self.codes[character]
                 i += 3
-                
+            
             elif(text[i : i + 2] in dictionary):
                 character = text[i : i + 2]
                 encoded_text += self.codes[character]
                 i += 2
-                
+            
             elif(text[i] in dictionary):
                 character = text[i]
                 encoded_text += self.codes[character]
                 i += 1
+       
+        # son 3 karakter için n gram hesabı
+        
+        if(i < len(text) - 3 and text[i : i + 3] in dictionary):
+            character = text[i : i + 3]
+            encoded_text += self.codes[character]
+               
+        if(i < len(text) - 2 and text[i : i + 2] in dictionary):
+            character = text[i : i + 2]
+            encoded_text += self.codes[character]
+       
+        if(i < len(text) - 3 and text[i + 1 : i + 3] in dictionary):
+            character = text[i + 1 : i + 3]
+            encoded_text += self.codes[character]
+                
+        if(i < len(text) and text[i] in dictionary):
+            character = text[i]
+            encoded_text += self.codes[character]
+        
+        if(i < len(text) - 1 and text[i + 1] in dictionary):
+            character = text[i + 1]
+            encoded_text += self.codes[character]
+        
+        if(i < len(text) - 2 and text[i + 2] in dictionary):
+            character = text[i + 2]
+            encoded_text += self.codes[character]
+                
+                
+        i = len(text)        
+        #print encoded_text
+              
             
         return encoded_text
 
@@ -164,7 +240,13 @@ class HuffmanCoding:
 
             b = self.get_byte_array(padded_encoded_text)
             output.write(bytes(b))
-
+            
+        header_path = filename + ".header"    
+        w = csv.writer(open(header_path, "w"))
+        for key, val in self.reverse_mapping.items():
+            w.writerow([key, val])  
+            
+        #print "Codes: " + str(self.codes)        
         print("Compressed")
         return output_path
 
@@ -194,11 +276,14 @@ class HuffmanCoding:
         return decoded_text
 
 
-    def decompress(self, input_path):
-        filename, file_extension = os.path.splitext(self.path)
+    def decompress(self, compressed_path, header_path):
+        filename, file_extension = os.path.splitext(compressed_path)
         output_path = filename + "_decompressed" + ".txt"
+        
+        with open(header_path) as header:
+            self.reverse_mapping = dict(filter(None, csv.reader(header)))
 
-        with open(input_path, 'rb') as file, open(output_path, 'w') as output:
+        with open(compressed_path, 'rb') as file, open(output_path, 'w') as output:
             bit_string = ""
 
             byte = file.read(1)
